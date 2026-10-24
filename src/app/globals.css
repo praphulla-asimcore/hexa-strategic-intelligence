@@ -1,26 +1,131 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --chip: #eef2f7;
+  --line: #e3e8ef;
+  --ink: #0f172a;
+  --ink-2: #334155;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+  --brand-50: #eef4ff;
+  --brand-200: #c7d7fe;
+  --brand-500: #4f7cf7;
+  --brand-600: #2f5fe6;
+  --brand-700: #2347bd;
+  --good: #0f8a5f;
+  --good-50: #e8f7f0;
+  --good-200: #b5e6cf;
+  --warn: #b26a00;
+  --warn-50: #fff6e5;
+  --warn-200: #fbd9a0;
+  --bad: #c2362f;
+  --bad-50: #fdecea;
+  --bad-200: #f5bdb8;
+  --sidebar: #0b1430;
+  --chart-1: #2f5fe6;
+  --chart-2: #0f8a5f;
+  --chart-3: #d97706;
+  --chart-4: #9333ea;
+  --chart-5: #0891b2;
+  --chart-6: #e11d48;
+}
+
+.dark {
+  --bg: #0a0f1d;
+  --surface: #111827;
+  --surface-2: #0f1626;
+  --chip: #1c2638;
+  --line: #243049;
+  --ink: #e8edf6;
+  --ink-2: #c3cddd;
+  --muted: #8b97ab;
+  --subtle: #65728a;
+  --brand-50: #14204a;
+  --brand-200: #2a3f86;
+  --brand-500: #6b91ff;
+  --brand-600: #5a83ff;
+  --brand-700: #93b0ff;
+  --good: #34c48c;
+  --good-50: #0d2a20;
+  --good-200: #1c5a42;
+  --warn: #f1a93b;
+  --warn-50: #2c1f08;
+  --warn-200: #6a4810;
+  --bad: #f2756d;
+  --bad-50: #2d1311;
+  --bad-200: #6e2621;
+  --sidebar: #060b18;
+  --chart-1: #6b91ff;
+  --chart-2: #34c48c;
+  --chart-3: #f1a93b;
+  --chart-4: #b57bff;
+  --chart-5: #38bdf8;
+  --chart-6: #fb7185;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-chip: var(--chip);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-brand-50: var(--brand-50);
+  --color-brand-200: var(--brand-200);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-good: var(--good);
+  --color-good-50: var(--good-50);
+  --color-good-200: var(--good-200);
+  --color-warn: var(--warn);
+  --color-warn-50: var(--warn-50);
+  --color-warn-200: var(--warn-200);
+  --color-bad: var(--bad);
+  --color-bad-50: var(--bad-50);
+  --color-bad-200: var(--bad-200);
+  --color-sidebar: var(--sidebar);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background: var(--bg);
+  color: var(--ink);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.recharts-cartesian-grid line {
+  stroke: var(--line);
+}
+.recharts-text {
+  fill: var(--muted);
+  font-size: 11px;
+}
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+@media print {
+  aside,
+  .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  body {
+    background: white;
+  }
 }
