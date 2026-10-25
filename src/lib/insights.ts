@@ -213,12 +213,12 @@ export function buildContext(s: IntelState) {
     .map((p) => `- ${p.entity_id} ${p.service} ${p.country}: ${p.currency} ${p.observed_value} ${p.unit} (${p.price_type}; scope: ${p.scope.join(", ")}) [${p.provenance.verification_status}, ${p.provenance.confidence}]`)
     .join("\n");
   const accts = rankedAccounts(s)
-    .map(({ a, p }) => `- ${a.name}${a.sample ? " (SAMPLE)" : ""} ${a.country} ${a.segment} propensity=${p.score} tier=${p.tier} | why company: ${a.why_company} | why service: ${a.why_service} | why now: ${a.why_now} | incumbent=${a.incumbent ?? "none"}`)
+    .map(({ a, p }) => `- ${a.name} ${a.country} ${a.segment} propensity=${p.score} tier=${p.tier} | why company: ${a.why_company} | why service: ${a.why_service} | why now: ${a.why_now} | incumbent=${a.incumbent ?? "none"}`)
     .join("\n");
   const sigs = s.signals.map((x) => `- [${x.urgency}] ${x.title} → ${x.recommended_action} (owner ${x.owner}, due ${x.due_date}, ${x.status})`).join("\n");
   const wl = winLoss(s.opportunities);
   return `MARKETS (ranked):\n${markets}\n\nCOMPETITORS:\n${comps}\n\nPRICING OBSERVATIONS:\n${prices}\n\nACCOUNTS (ranked):\n${accts}\n\nSIGNALS:\n${sigs}\n\nWIN/LOSS: closed=${wl.closed} won=${wl.won} winRate=${(wl.winRate * 100).toFixed(1)}% topLoss=${wl.reasons
     .slice(0, 3)
     .map((r) => `${r.reason}:${r.count}`)
-    .join(", ")}\n\nNOTE: Pipeline, accounts and most scores are illustrative seed data, not verified research.`;
+    .join(", ")}\n\nNOTE: facts show verification status; market/threat scores are analyst judgements; pipeline contains only deals logged by the team (may be empty).`;
 }

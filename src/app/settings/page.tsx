@@ -5,10 +5,11 @@ import { Download, RotateCcw, Upload } from "lucide-react";
 import { useIntel, type IntelState } from "@/lib/store";
 import { DEFAULT_WEIGHTS } from "@/lib/scoring";
 import { HEXA } from "@/lib/data/seed";
+import { AdminPanel } from "@/components/admin";
 import { Badge, Button, Card, PageHeader, Slider, pct } from "@/components/ui";
 
 export default function Settings() {
-  const { state, set, reset, replace } = useIntel();
+  const { state, set, reset, replace, mode } = useIntel();
   const file = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
   const tw = state.weights.threat;
@@ -37,7 +38,8 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Models & data" subtitle="Scoring weights, data import/export and platform configuration. Data persists in this browser until the PostgreSQL backend (db/schema.sql) is connected." />
+      <PageHeader title="Models & data" subtitle="Integrations, live data jobs, users & roles, audit trail, scoring weights and data export." />
+      <AdminPanel />
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Competitor threat weights" subtitle={`Blueprint default 30/25/20/15/10 · normalised (sum ${sumT.toFixed(2)})`} actions={<Button size="sm" variant="ghost" onClick={() => set("weights", (w) => ({ ...w, threat: DEFAULT_WEIGHTS.threat }))}><RotateCcw className="h-3 w-3" /> Default</Button>}>
           <div className="space-y-3">
@@ -59,8 +61,8 @@ export default function Settings() {
             {(["competitors", "accounts", "observations", "signals"] as const).map((k) => <Button key={k} size="sm" variant="ghost" onClick={() => exportCsv(k)}>{k}.csv</Button>)}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button onClick={() => file.current?.click()}><Upload className="h-4 w-4" /> Import JSON</Button>
-            <Button variant="danger" onClick={() => { if (confirm("Reset all data to seed? Your edits in this browser will be lost.")) { reset(); setMsg("Reset to seed data."); } }}><RotateCcw className="h-4 w-4" /> Reset to seed</Button>
+            {mode !== "remote" && <Button onClick={() => file.current?.click()}><Upload className="h-4 w-4" /> Import JSON</Button>}
+            {mode !== "remote" && <Button variant="danger" onClick={() => { if (confirm("Reset all data to seed? Your edits in this browser will be lost.")) { reset(); setMsg("Reset to seed data."); } }}><RotateCcw className="h-4 w-4" /> Reset to seed</Button>}
             <input ref={file} type="file" accept="application/json" className="hidden" onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;
@@ -96,17 +98,17 @@ export default function Settings() {
         <Card className="lg:col-span-2" title="Integrations roadmap" subtitle="Build proprietary models, scoring and UI; buy/licence high-cost external data where justified">
           <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             {[
-              ["AI analyst", "Set ANTHROPIC_API_KEY in Vercel to enable Claude-grounded answers and outreach drafts.", "ready"],
-              ["PostgreSQL (Neon)", "Schema in db/schema.sql — append-only observations, score versions, audit trail.", "next"],
-              ["CRM", "Sync accounts, opportunities, activities and win/loss reasons.", "planned"],
-              ["Change monitoring", "Visualping / Crayon webhooks → Signals.", "planned"],
-              ["Enrichment", "Apollo / Clay for firmographics & verified contacts (record lawful basis).", "planned"],
+              ["Claude analyst", "Grounded Q&A, news triage, change summaries, price extraction, outreach drafts.", "live"],
+              ["Shared database", "Neon Postgres: records, append-only audit log, users & roles, job runs.", "live"],
+              ["Website monitor", "Daily diff of competitor sites & pricing pages → Signals + extracted prices.", "live"],
+              ["News & regulatory", "Google News queries per competitor and AU/MY/SG/NP/ID regulation → Signals.", "live"],
+              ["Apollo / Lusha", "Account search, decision-makers, job postings, contact enrichment.", "live"],
+              ["FX", "Daily live rates feed the margin model.", "live"],
               ["Digital intel", "Semrush / Similarweb for keyword gaps and traffic.", "planned"],
-              ["Regulatory feeds", "Official gazettes / regulator RSS for AU, MY, SG, ID, NP.", "planned"],
               ["Hexa systems", "HexaInsights, HexaComply, APEX — delivery cost & utilisation.", "planned"],
             ].map(([t, d, s]) => (
               <div key={t} className="rounded-lg border border-line p-3">
-                <div className="flex items-center justify-between"><span className="font-medium text-ink">{t}</span><Badge tone={s === "ready" ? "green" : s === "next" ? "blue" : "slate"}>{s}</Badge></div>
+                <div className="flex items-center justify-between"><span className="font-medium text-ink">{t}</span><Badge tone={s === "live" ? "green" : "slate"}>{s}</Badge></div>
                 <p className="mt-1 text-xs text-muted">{d}</p>
               </div>
             ))}

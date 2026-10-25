@@ -1,19 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Copy, Plus, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
+import { Copy, Plus, Search, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
 import { useIntel, uid } from "@/lib/store";
 import { useFocusParam } from "@/lib/hooks";
 import { propensity } from "@/lib/scoring";
 import { ARENAS, ARENA_LABEL, ARENA_SHORT, COUNTRY_FLAG, COUNTRY_LABEL, SIGNAL_LABEL } from "@/lib/labels";
 import type { Account, Arena, Contact, CountryCode, Segment } from "@/lib/types";
+import { ContactReveal, FindAccounts, FindPeople } from "@/components/prospecting";
 import { Badge, Button, Card, Empty, Field, Input, Modal, PageHeader, ScoreBar, Select, Table, Td, Textarea, Th, UrgencyBadge } from "@/components/ui";
 
 const STATUSES: Account["status"][] = ["new", "researching", "contacted", "engaged", "opportunity", "customer", "disqualified"];
 
 export default function Accounts() {
-  const { state, set } = useIntel();
+  const { state, set, status } = useIntel();
   const [focus, setFocus] = useFocusParam();
+  const [finding, setFinding] = useState(false);
   const [country, setCountry] = useState<CountryCode | "all">("all");
   const [arena, setArena] = useState<Arena | "all">("all");
   const [tier, setTier] = useState<"all" | "A" | "B" | "C">("all");
@@ -37,10 +39,10 @@ export default function Accounts() {
       <PageHeader
         title="Target accounts"
         subtitle="Propensity combines ICP fit, outsourcing readiness, trigger signals, decision-maker access and displaceability. Each account answers why this company, why this service, why now."
-        actions={<Button variant="primary" onClick={() => setAdding(true)}><Plus className="h-4 w-4" /> Add account</Button>}
+        actions={<><Button onClick={() => setAdding(true)}><Plus className="h-4 w-4" /> Add manually</Button><Button variant="primary" onClick={() => setFinding(true)} disabled={!status?.apollo} title={status?.apollo ? "" : "Set APOLLO_API_KEY in Vercel"}><Search className="h-4 w-4" /> Find accounts (Apollo)</Button></>}
       />
       <div className="rounded-lg border border-warn-200 bg-warn-50 px-4 py-2.5 text-xs text-warn">
-        Accounts marked <b>sample</b> are fictional placeholders for demonstrating the workflow. Load real accounts from CRM or an enrichment provider (Apollo, Clay) with lawful basis recorded per contact.
+        Accounts come live from Apollo (firmographics + open roles) and Lusha (enrichment), or are added manually by BD. ICP fit and readiness start at 3 — review them, and record lawful basis per contact.{!status?.apollo && " Apollo is not connected yet: add APOLLO_API_KEY in Vercel → Settings → Environment Variables."}
       </div>
       <div className="flex flex-wrap gap-3">
         <Select label="Country" value={country} onChange={setCountry} options={[{ value: "all", label: "All" }, ...countries.map((c) => ({ value: c, label: `${COUNTRY_FLAG[c]} ${c}` }))]} />
@@ -56,7 +58,7 @@ export default function Accounts() {
               {rows.map(({ a, p }) => (
                 <tr key={a.id} onClick={() => setFocus(a.id)} className={`cursor-pointer hover:bg-surface-2 ${sel?.a.id === a.id ? "bg-brand-50" : ""}`}>
                   <Td>
-                    <div className="flex items-center gap-1.5 font-medium text-ink">{a.name} {a.sample && <Badge>sample</Badge>}</div>
+                    <div className="flex items-center gap-1.5 font-medium text-ink">{a.name}</div>
                     <div className="text-xs text-muted">{COUNTRY_FLAG[a.country]} {a.industry} · {ARENA_SHORT[a.target_arena]}</div>
                   </Td>
                   <Td>
@@ -68,8 +70,9 @@ export default function Accounts() {
             </tbody>
           </Table>
         </Card>
-        <div className="min-w-0 xl:col-span-3">{sel ? <AccountDetail a={sel.a} p={sel.p} /> : <Empty>No accounts match</Empty>}</div>
+        <div className="min-w-0 xl:col-span-3">{sel ? <AccountDetail a={sel.a} p={sel.p} /> : <Empty>{state.accounts.length ? "No accounts match the filters." : "No accounts yet. Use “Find accounts (Apollo)” — e.g. the AU accounting firms preset — or add one manually."}</Empty>}</div>
       </div>
+      <FindAccounts open={finding} onClose={() => setFinding(false)} />
       <AddAccount open={adding} onClose={() => setAdding(false)} onAdd={(a) => set("accounts", (xs) => [...xs, a])} />
     </div>
   );
@@ -80,6 +83,8 @@ function AccountDetail({ a, p }: { a: Account; p: ReturnType<typeof propensity> 
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const [addingContact, setAddingContact] = useState(false);
+  const [findingPeople, setFindingPeople] = useState(false);
+  const { status } = useIntel();
   const sigs = state.signals.filter((s) => a.signals.includes(s.id) || s.entity_id === a.id);
   const inc = state.competitors.find((c) => c.id === a.incumbent);
   const upd = (patch: Partial<Account>) => set("accounts", (xs) => xs.map((x) => (x.id === a.id ? { ...x, ...patch } : x)));
@@ -111,8 +116,8 @@ function AccountDetail({ a, p }: { a: Account; p: ReturnType<typeof propensity> 
   return (
     <div className="space-y-4">
       <Card
-        title={<span className="flex items-center gap-2">{a.name} {a.sample && <Badge>sample</Badge>}</span>}
-        subtitle={`${COUNTRY_FLAG[a.country]} ${COUNTRY_LABEL[a.country]} · ${a.industry} · ${a.segment} · ${a.headcount} staff · ${a.revenue_band}`}
+        title={<span className="flex items-center gap-2">{a.name}</span>}
+        subtitle={`${COUNTRY_FLAG[a.country]} ${a.location || COUNTRY_LABEL[a.country]} · ${a.industry} · ${a.segment} · ${a.headcount || "?"} staff${a.source ? ` · source: ${a.source}` : ""}${a.enriched_at ? ` · refreshed ${a.enriched_at}` : ""}`}
         actions={<Select value={a.status} onChange={(v) => upd({ status: v })} options={STATUSES.map((s) => ({ value: s, label: s }))} />}
       >
         <div className="grid gap-4 md:grid-cols-3">
@@ -136,6 +141,19 @@ function AccountDetail({ a, p }: { a: Account; p: ReturnType<typeof propensity> 
             <div><span className="text-muted">Incumbent / alternative: </span><span className="text-ink-2">{inc?.name ?? "None identified"}</span></div>
             <div><span className="text-muted">Software: </span>{a.software.map((s) => <Badge key={s} className="mr-1">{s}</Badge>)}</div>
             <div><span className="text-muted">Owner: </span><span className="text-ink-2">{a.owner}</span></div>
+            {(a.website || a.domain) && <div><span className="text-muted">Web: </span><a className="text-brand-700 hover:underline" href={a.website || `https://${a.domain}`} target="_blank" rel="noreferrer">{a.domain || a.website}</a>{a.linkedin_url && <> · <a className="text-brand-700 hover:underline" href={a.linkedin_url} target="_blank" rel="noreferrer">LinkedIn</a></>}</div>}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <label className="text-muted">ICP fit <Select value={String(a.fit)} onChange={(v) => upd({ fit: +v })} options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }))} /></label>
+              <label className="text-muted">Readiness <Select value={String(a.outsourcing_readiness)} onChange={(v) => upd({ outsourcing_readiness: +v })} options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }))} /></label>
+            </div>
+            {!!a.open_roles?.length && (
+              <div className="pt-1">
+                <div className="mb-1 text-muted">Open roles (Apollo, live)</div>
+                {a.open_roles.slice(0, 6).map((r, i) => (
+                  <div key={i} className="truncate text-ink-2">• {r.url ? <a href={r.url} target="_blank" rel="noreferrer" className="hover:underline">{r.title}</a> : r.title}{r.posted_at ? <span className="text-subtle"> · {r.posted_at.slice(0, 10)}</span> : null}</div>
+                ))}
+              </div>
+            )}
             <div className="pt-1">
               <div className="mb-1 text-muted">Trigger signals</div>
               {sigs.length ? sigs.map((s) => (
@@ -146,10 +164,10 @@ function AccountDetail({ a, p }: { a: Account; p: ReturnType<typeof propensity> 
         </div>
       </Card>
 
-      <Card title="Buying group" subtitle="Verified business contacts only; lawful basis recorded per person" actions={<Button size="sm" onClick={() => setAddingContact(true)}><UserPlus className="h-3.5 w-3.5" /> Add</Button>} pad={false}>
+      <Card title="Buying group" subtitle="Verified business contacts only; lawful basis recorded per person" actions={<div className="flex gap-1.5">{status?.apollo && <Button size="sm" variant="primary" onClick={() => setFindingPeople(true)}><Search className="h-3.5 w-3.5" /> Find (Apollo)</Button>}<Button size="sm" onClick={() => setAddingContact(true)}><UserPlus className="h-3.5 w-3.5" /> Add</Button></div>} pad={false}>
         {a.contacts.length ? (
           <Table>
-            <thead><tr><Th>Contact</Th><Th>Influence</Th><Th>Relationship</Th><Th>Privacy</Th></tr></thead>
+            <thead><tr><Th>Contact</Th><Th>Influence</Th><Th>Relationship</Th><Th>Privacy</Th><Th>Contact details</Th></tr></thead>
             <tbody>
               {a.contacts.map((c) => (
                 <tr key={c.id}>
@@ -162,11 +180,15 @@ function AccountDetail({ a, p }: { a: Account; p: ReturnType<typeof propensity> 
                       {c.verified ? <Badge tone="green"><ShieldCheck className="h-3 w-3" /> verified</Badge> : <Badge tone="amber">unverified</Badge>}
                     </div>
                   </Td>
+                  <Td>
+                    <ContactReveal account={a} contact={c} onUpdate={(nc) => upd({ contacts: a.contacts.map((x) => (x.id === c.id ? nc : x)) })} />
+                    {c.linkedin_url && <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="mt-1 block text-[11px] text-muted hover:underline">LinkedIn</a>}
+                  </Td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        ) : <div className="p-5"><Empty>No contacts. Use your enrichment workflow to identify the buying group.</Empty></div>}
+        ) : <div className="p-5"><Empty>No contacts yet. {status?.apollo ? "Use “Find (Apollo)” to pull decision-makers." : "Add contacts manually, or connect Apollo."}</Empty></div>}
       </Card>
 
       <Card title="Evidence-backed outreach" subtitle="Template uses only the account's recorded why/why-now; AI draft uses the Ask endpoint if configured">
@@ -177,6 +199,7 @@ function AccountDetail({ a, p }: { a: Account; p: ReturnType<typeof propensity> 
         </div>
         <Textarea rows={draft ? 12 : 3} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Generate a draft, then edit before sending." />
       </Card>
+      <FindPeople account={a} open={findingPeople} onClose={() => setFindingPeople(false)} onAdd={(cs) => upd({ contacts: [...a.contacts, ...cs] })} />
       <AddContact open={addingContact} onClose={() => setAddingContact(false)} onAdd={(c) => upd({ contacts: [...a.contacts, c] })} />
     </div>
   );

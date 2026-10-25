@@ -45,8 +45,8 @@ export function localAnswer(s: IntelState, q: string): string {
     const country = (Object.keys(COUNTRY_LABEL) as (keyof typeof COUNTRY_LABEL)[]).find((k) => t.includes(COUNTRY_LABEL[k].toLowerCase()));
     const xs = rankedAccounts(s).filter(({ a }) => !country || a.country === country).slice(0, 10);
     out.push(`**Top ${xs.length} accounts by propensity${country ? ` in ${COUNTRY_LABEL[country]}` : ""}:**`);
-    out.push(xs.map(({ a, p }) => `- **${a.name}**${a.sample ? " (sample)" : ""} — ${p.score} (tier ${p.tier}). Why now: ${a.why_now} Verified decision-maker: ${a.contacts.some((c) => c.verified && c.influence === "decision_maker") ? "yes" : "no"}.`).join("\n"));
-    out.push("Sample accounts are fictional placeholders; load CRM / enrichment data for real targeting.");
+    out.push(xs.map(({ a, p }) => `- **${a.name}** — ${p.score} (tier ${p.tier}). Why now: ${a.why_now} Verified decision-maker: ${a.contacts.some((c) => c.verified && c.influence === "decision_maker") ? "yes" : "no"}.`).join("\n"));
+    if (!xs.length) out.push("No accounts yet — use Accounts → Find accounts (Apollo) to import real targets.");
     return out.join("\n\n");
   }
 
@@ -54,7 +54,7 @@ export function localAnswer(s: IntelState, q: string): string {
     const wl = winLoss(s.opportunities);
     out.push(`**Win/loss:** ${wl.won} of ${wl.closed} closed deals won (${(wl.winRate * 100).toFixed(1)}%).`);
     out.push(`Top loss reasons:\n${wl.reasons.slice(0, 5).map((r) => `- ${LOSS_LABEL[r.reason]}: ${r.count}`).join("\n")}`);
-    out.push("Pipeline data is illustrative seed data until CRM is connected.");
+    if (!wl.closed) out.push("No closed deals logged yet — log deals and outcomes in Sales.");
     return out.join("\n\n");
   }
 
@@ -79,6 +79,6 @@ export function localAnswer(s: IntelState, q: string): string {
   });
   const recs = recommendations(s).slice(0, 4);
   out.push(`**What must we do:**\n${recs.map((r) => `- ${r.title} (${r.owner}, ${r.urgency})`).join("\n")}`);
-  out.push("_Uncertainty: most scores and all pipeline/account data are illustrative seed values pending verification._");
+  out.push("_Uncertainty: market and threat scores are analyst judgements; facts marked pending/unverified need confirmation._");
   return out.join("\n\n");
 }

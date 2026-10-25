@@ -49,8 +49,8 @@ export default function Overview() {
         <Stat label="New signals" value={k.newSignals} tone={k.newSignals > 5 ? "warn" : "default"} sub="awaiting triage" icon={<Bell className="h-4 w-4" />} />
         <Stat label="Qualified accounts" value={k.qualified} sub="tier A + B propensity" icon={<Building2 className="h-4 w-4" />} />
         <Stat label="Open pipeline" value={fmtUsd(k.pipelineValue)} sub={`${fmtUsd(k.pipelineGP)} expected GP`} icon={<TrendingUp className="h-4 w-4" />} />
-        <Stat label="Win rate" value={pct(k.winRate)} sub={`${fmtUsd(k.wonGP)} won GP`} icon={<Target className="h-4 w-4" />} />
-        <Stat label="Intel-assisted lift" value={`${k.lift.gpLift >= 0 ? "+" : ""}${pct(k.lift.gpLift)}`} tone={k.lift.gpLift > 0 ? "good" : "bad"} sub="GP / target vs control" icon={<CheckCircle2 className="h-4 w-4" />} />
+        <Stat label="Win rate" value={k.funnel.length && state.opportunities.some((o) => o.stage === "won" || o.stage === "lost") ? pct(k.winRate) : "—"} sub={state.opportunities.length ? `${fmtUsd(k.wonGP)} won GP` : "log deals in Sales"} icon={<Target className="h-4 w-4" />} />
+        <Stat label="Intel-assisted lift" value={k.lift.control.gpPerTarget ? `${k.lift.gpLift >= 0 ? "+" : ""}${pct(k.lift.gpLift)}` : "—"} tone={k.lift.gpLift > 0 ? "good" : "bad"} sub="GP / target vs control" icon={<CheckCircle2 className="h-4 w-4" />} />
       </div>
 
       <Card className="hexa-accent-top" title={<span className="text-hexa-gradient text-base">Where to win next</span>} subtitle="Top-ranked market combinations with rivals, price position, target accounts and the next action.">
@@ -94,13 +94,16 @@ export default function Overview() {
                         )}
                       </>
                     ) : (
-                      <span className="text-muted">No Hexa price on file</span>
+                      <span className="text-muted">
+                        {state.pricing.filter((p) => p.entity_id !== "hexa" && p.arena === w.m.arena).slice(0, 3).map((p) => `${state.competitors.find((c) => c.id === p.entity_id)?.name ?? p.entity_id} ${p.currency} ${p.observed_value}`).join(" · ") || "No rival prices yet"} —{" "}
+                        <Link href="/pricing" className="text-brand-700 hover:underline">add Hexa price</Link>
+                      </span>
                     )}
                   </dd>
                 </div>
                 <div>
                   <dt className="font-medium text-muted">Who to target</dt>
-                  <dd className="mt-0.5 text-ink-2">{w.accounts.length ? w.accounts.map(({ a, p }) => `${a.name} (${p.score})`).join(", ") : <span className="text-muted">Build account list</span>}</dd>
+                  <dd className="mt-0.5 text-ink-2">{w.accounts.length ? w.accounts.map(({ a, p }) => `${a.name} (${p.score})`).join(", ") : <Link href="/accounts" className="text-brand-700 hover:underline">Find accounts via Apollo →</Link>}</dd>
                 </div>
               </dl>
               <div className="mt-auto pt-3">
@@ -163,6 +166,7 @@ export default function Overview() {
           </ul>
         </Card>
         <Card title="What changed" subtitle="Signals by due date" actions={<Link href="/alerts" className="text-xs font-medium text-brand-600 hover:underline">Alerts →</Link>} pad={false}>
+          {!sigs.length && <p className="px-5 py-6 text-sm text-muted">No signals yet. Live monitors (websites, pricing pages, news, regulation, hiring) run daily — or run them now in Models &amp; data.</p>}
           <ul className="divide-y divide-line">
             {sigs.map((s) => (
               <li key={s.id} className="px-5 py-2.5">

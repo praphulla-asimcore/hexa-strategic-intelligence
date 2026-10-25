@@ -93,6 +93,7 @@ export const SIGNAL_LABEL: Record<SignalType, string> = {
   regulatory: "Regulatory",
   web_change: "Website change",
   partnership: "Partnership",
+  news: "News",
 };
 
 export const PRICE_TYPE_LABEL: Record<PriceType, string> = {

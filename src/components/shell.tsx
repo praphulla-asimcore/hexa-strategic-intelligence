@@ -10,6 +10,7 @@ import {
   BookOpen,
   Building2,
   ChevronDown,
+  LogOut,
   Compass,
   DollarSign,
   FileText,
@@ -27,6 +28,7 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { useIntel } from "@/lib/store";
 import { ARENA_SHORT, COUNTRY_FLAG } from "@/lib/labels";
 
@@ -49,8 +51,9 @@ const isActive = (path: string, href: string) => (href === "/" ? path === "/" : 
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
-  const { state } = useIntel();
+  const { state, mode, actor, status, error, toast } = useIntel();
   const [mobile, setMobile] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
   const [more, setMore] = useState(false);
   const [search, setSearch] = useState(false);
   const [dark, setDark] = useState(true);
@@ -113,6 +116,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
   };
 
   const secondaryActive = NAV.some((n) => !n.primary && isActive(path, n.href));
+
+  if (path === "/login")
+    return (
+      <div className="relative min-h-screen">
+        <AmbientBackground />
+        {children}
+      </div>
+    );
 
   return (
     <div className="relative min-h-screen">
@@ -184,6 +195,28 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <button onClick={toggleTheme} className="nav-icon-btn" aria-label="Toggle theme">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            {actor && !actor.setupMode && (
+              <div className="relative">
+                <button onClick={() => setUserMenu((u) => !u)} className="nav-icon-btn overflow-hidden p-0" aria-label="Account">
+                  {actor.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={actor.image} alt="" className="h-8 w-8 rounded-xl object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className="grid h-8 w-8 place-items-center rounded-xl bg-hexa-gradient text-xs font-bold text-white">{(actor.name || actor.email)[0]?.toUpperCase()}</span>
+                  )}
+                </button>
+                {userMenu && (
+                  <div className="glass-pop absolute right-0 top-full mt-2 w-64 rounded-xl p-3 text-sm">
+                    <div className="font-medium text-ink">{actor.name || actor.email}</div>
+                    <div className="truncate text-xs text-muted">{actor.email}</div>
+                    <div className="mt-2 inline-block rounded-md bg-brand-50 px-2 py-0.5 text-[11px] font-medium capitalize text-brand-700">{actor.role}</div>
+                    <button onClick={() => signOut({ callbackUrl: "/login" })} className="mt-3 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-ink-2 hover:bg-chip">
+                      <LogOut className="h-4 w-4" /> Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             <Link href="/ask" className="btn-hexa hidden items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold sm:inline-flex">
               <Sparkles className="h-4 w-4" /> Ask
             </Link>
@@ -192,9 +225,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </nav>
-        <div className="mx-auto mt-2 flex max-w-[1440px] justify-end px-1">
-          <span className="rounded-full bg-warn-50 px-2.5 py-0.5 text-[10px] font-medium text-warn ring-1 ring-inset ring-warn-200">Seed data — illustrative, verify before use</span>
+        <div className="mx-auto mt-2 flex max-w-[1440px] justify-end gap-2 px-1">
+          <LiveStatus mode={mode} status={status} setupMode={!!actor?.setupMode} />
         </div>
+        {error && (
+          <div className="mx-auto mt-2 max-w-[1440px] rounded-xl bg-bad-50 px-3 py-2 text-xs text-bad ring-1 ring-inset ring-bad-200">{error}</div>
+        )}
       </header>
 
       {mobile && (
@@ -232,7 +268,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <main className="relative z-10 mx-auto w-full max-w-[1440px] px-4 pb-10 pt-4 sm:px-6 lg:px-8">{children}</main>
       {search && <CommandPalette onClose={() => setSearch(false)} />}
+      {toast && (
+        <div className="glass-pop fixed bottom-5 left-1/2 z-[60] -translate-x-1/2 rounded-xl px-4 py-2.5 text-sm text-ink">{toast}</div>
+      )}
     </div>
+  );
+}
+
+function LiveStatus({ mode, status, setupMode }: { mode: string; status: { database: boolean; auth: boolean; apollo: boolean; lusha: boolean; anthropic: boolean } | null; setupMode: boolean }) {
+  if (mode === "loading") return <span className="rounded-full bg-chip px-2.5 py-0.5 text-[10px] text-muted">Connecting…</span>;
+  if (mode === "remote")
+    return (
+      <Link href="/settings" className="inline-flex items-center gap-1.5 rounded-full bg-good-50 px-2.5 py-0.5 text-[10px] font-medium text-good ring-1 ring-inset ring-good-200">
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-good" /> Live · shared database
+        {setupMode && <span className="text-warn">· login not configured</span>}
+        {status && !(status.apollo && status.lusha && status.anthropic) && <span className="text-muted">· some feeds off</span>}
+      </Link>
+    );
+  return (
+    <Link href="/settings" className="rounded-full bg-warn-50 px-2.5 py-0.5 text-[10px] font-medium text-warn ring-1 ring-inset ring-warn-200">
+      Not connected — saving in this browser only · finish setup
+    </Link>
   );
 }
 
@@ -267,7 +323,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
       ...NAV.map((n) => ({ label: n.label, sub: "Page", href: n.href, kind: "Go to" })),
       ...state.competitors.map((c) => ({ label: c.name, sub: `${c.tier} · ${c.arenas.map((a) => ARENA_SHORT[a]).join(", ")}`, href: `/competitors/${c.id}`, kind: "Competitor" })),
       ...state.markets.map((m) => ({ label: `${COUNTRY_FLAG[m.country]} ${m.country} · ${ARENA_SHORT[m.arena]} · ${m.segment}`, sub: m.notes, href: `/markets?focus=${m.id}`, kind: "Market" })),
-      ...state.accounts.map((a) => ({ label: a.name, sub: `${a.country} · ${a.industry}${a.sample ? " · sample" : ""}`, href: `/accounts?focus=${a.id}`, kind: "Account" })),
+      ...state.accounts.map((a) => ({ label: a.name, sub: `${a.country} · ${a.industry}`, href: `/accounts?focus=${a.id}`, kind: "Account" })),
       ...state.signals.map((s) => ({ label: s.title, sub: s.recommended_action, href: `/alerts?focus=${s.id}`, kind: "Signal" })),
     ];
     const t = q.trim().toLowerCase();

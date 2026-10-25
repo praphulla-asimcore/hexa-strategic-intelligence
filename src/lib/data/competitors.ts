@@ -1,11 +1,11 @@
 import type { Arena, Battlecard, Competitor, CompetitorKind, CompetitorTier, CountryCode, Segment } from "../types";
 
-// Seed competitor universe from the blueprint (section 3).
-// Positioning text for Tier 1 comes from the blueprint; everything else is a research
-// hypothesis and carries "unverified" status until an analyst confirms it.
+// Competitor universe from the blueprint (section 3), enriched with public-source research
+// (see RESEARCH below, each fact with its source). Threat inputs and strengths/weaknesses are
+// analyst judgements, labelled as such, and must be reviewed by the team.
 
-const ANALYST = "Intelligence analyst";
-const SEED_DATE = "2026-10-24";
+const ANALYST = "Analyst assessment v1 (public sources) — team review pending";
+const SEED_DATE = "2026-10-25";
 
 const emptyCard = (name: string): Battlecard => ({
   why_we_win: [
@@ -59,7 +59,7 @@ function mk(
   };
 }
 
-export const competitors: Competitor[] = [
+const base: Competitor[] = [
   // ───────── Tier 1 ─────────
   mk({
     id: "emapta",
@@ -530,3 +530,119 @@ export const competitors: Competitor[] = [
     threat_inputs: { customer_overlap: 4, service_overlap: 1, market_presence: 5, pricing_pressure: 1, growth_signals: 1 },
   }),
 ];
+
+// ───────── Verified public-source research (Oct 2026) ─────────
+type Patch = Partial<Competitor>;
+const src = (url: string, confidence: "high" | "medium" | "low" = "medium"): Competitor["provenance"] => ({
+  source_url: url,
+  source_type: "company_website",
+  observed_at: SEED_DATE,
+  confidence,
+  verification_status: "pending",
+  analyst: ANALYST,
+});
+
+const RESEARCH: Record<string, Patch> = {
+  emapta: {
+    hq: "Metro Manila, Philippines (founded 2010 to support an Australian business)",
+    size_band: "~7,200+ staff, 18 offices, 6 countries (company blog); third-party estimates 3.4k–12k",
+    countries: ["AU", "US", "UK", "SG"],
+    certifications: ["Certified B Corporation"],
+    strengths: [
+      "Transparent model: salary passed through at cost + per-seat service fee; one-time setup/recruitment fee",
+      "Scale and brand among AU SMEs and accounting firms",
+      "Delivery in Philippines, Sri Lanka, Colombia and others",
+    ],
+    weaknesses: [
+      "Staffing-led: quality ownership largely sits with the client (hypothesis)",
+      "No in-market EOR + advisory bundle comparable to Hexa's (hypothesis)",
+    ],
+    monitor_urls: ["https://emapta.com/pricing/"],
+    news_query: '"Emapta"',
+    evidence_coverage: 0.5,
+    provenance: src("https://emapta.com/", "medium"),
+  },
+  deel: {
+    hq: "San Francisco, US",
+    size_band: "Very large — reported US$1bn revenue run-rate (Jun 2025)",
+    strengths: ["Global coverage and self-serve platform", "Free HRIS for <200 employees used as a wedge", "EOR from US$599/employee/month; negotiated $400–500 at 20+ headcount (third-party reports)"],
+    weaknesses: ["Ticket-led support; limited hands-on regional advisory (hypothesis)", "Not a managed finance/tech operations provider"],
+    monitor_urls: ["https://www.deel.com/pricing"],
+    news_query: '"Deel" payroll OR "Deel" HR OR "Deel" EOR',
+    evidence_coverage: 0.6,
+    provenance: src("https://www.deel.com/pricing", "medium"),
+  },
+  remote: {
+    hq: "Remote-first (San Francisco / Lisbon)",
+    size_band: "ARR passed US$300m, cash-flow positive (May 2026); owns 100+ legal entities",
+    strengths: ["Owned-entity EOR model", "Transparent published pricing", "Cut EOR list price to US$599 (Oct 2026) + 15% startup discount"],
+    weaknesses: ["Not comparable for managed finance outsourcing", "Price cut signals EOR fee compression — limits premium for undifferentiated EOR"],
+    monitor_urls: ["https://remote.com/pricing"],
+    news_query: '"Remote.com" OR "Remote Technology" employer of record',
+    evidence_coverage: 0.6,
+    provenance: src("https://pricingsaas.com/companies/remote/diffs/2026W43", "medium"),
+  },
+  daythree: {
+    hq: "Kuala Lumpur, Malaysia — listed on Bursa ACE Market (Jul 2023)",
+    size_band: "Revenue ~RM89.8m (FY ending Dec 2025, aggregator); RM89.9m FY2023",
+    strengths: ["CX lifecycle + back-office processing", "Own AI/analytics tools (Saige, Daisy)"],
+    weaknesses: ["CX-weighted portfolio vs specialist finance capability (hypothesis)"],
+    news_query: '"Daythree"',
+    evidence_coverage: 0.45,
+    provenance: src("https://simplywall.st/stock/klse/day3", "medium"),
+  },
+  scicom: {
+    hq: "Kuala Lumpur, Malaysia — listed on Bursa Malaysia",
+    size_band: "Revenue ~RM210.8m (TTM to Sep 2025, aggregator); ~1,100 staff",
+    strengths: ["Multilingual multi-channel BPO", "Government and enterprise references"],
+    weaknesses: ["Contact-centre heavy; less SME/accounting-firm focus (hypothesis)"],
+    news_query: '"Scicom" Malaysia',
+    evidence_coverage: 0.4,
+    provenance: src("https://simplywall.st/stock/klse/scicom", "medium"),
+  },
+  "toa-global": {
+    hq: "Queensland, Australia (offices in Clark, Cebu, Manila, Tarlac; US office Fort Worth)",
+    size_band: "3,000+ team members serving 800+ accounting firms",
+    positioning: "Offshore staffing exclusively for accounting firms (AU, NZ, US, UK), Philippines delivery.",
+    strengths: ["Deep focus on accounting firms", "Scale in the Philippines"],
+    weaknesses: ["Single-vertical; no EOR/advisory bundle (hypothesis)"],
+    news_query: '"TOA Global"',
+    evidence_coverage: 0.4,
+    provenance: src("https://careers.toaglobal.com/", "medium"),
+  },
+  multiplier: {
+    hq: "Singapore",
+    strengths: ["EOR from ~US$400/employee/month, no setup/termination/FX fees (reported)", "APAC origin"],
+    monitor_urls: ["https://www.usemultiplier.com/pricing"],
+    news_query: '"Multiplier" EOR OR "usemultiplier"',
+    evidence_coverage: 0.35,
+    provenance: src("https://www.usemultiplier.com/employer-of-record/employer-of-record-cost", "medium"),
+  },
+  oyster: {
+    strengths: ["EOR list US$699/employee/month; ~US$599 on annual/scale plans (reported)"],
+    monitor_urls: ["https://www.oysterhr.com/pricing"],
+    news_query: '"Oyster HR" OR OysterHR',
+    evidence_coverage: 0.3,
+  },
+  rippling: {
+    strengths: ["Bundles EOR with HRIS/payroll platform; EOR reportedly ~US$499–599 (not published)"],
+    news_query: '"Rippling" EOR OR "Rippling" global payroll',
+    evidence_coverage: 0.3,
+  },
+  gp: { news_query: '"Globalization Partners" OR "G-P" employer of record' },
+  outsourced: { news_query: '"Outsourced.ph" OR "Outsourced" Philippines staffing' },
+  "links-intl": { news_query: '"Links International" HR' },
+  boardroom: { news_query: '"Boardroom Limited" OR "BoardRoom" Singapore payroll' },
+  bipo: { news_query: '"BIPO" payroll' },
+  staffcloud: { news_query: '"StaffCloud" Nepal' },
+  "qx-global": { news_query: '"QX Global"' },
+  entigrity: { news_query: '"Entigrity"' },
+  sourcefit: { news_query: '"Sourcefit"' },
+  flatworld: { news_query: '"Flatworld Solutions"' },
+  safeguard: { news_query: '"Safeguard Global"' },
+  talenox: { news_query: '"Talenox"' },
+  cloudfactory: { news_query: '"CloudFactory"' },
+  fusemachines: { news_query: '"Fusemachines"' },
+};
+
+export const competitors: Competitor[] = base.map((c) => ({ ...c, ...(RESEARCH[c.id] ?? {}) }));

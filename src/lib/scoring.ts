@@ -314,12 +314,24 @@ export function pearson(xs: number[], ys: number[]): number {
   return dx && dy ? num / Math.sqrt(dx * dy) : NaN;
 }
 
-/** Back-test: does the attractiveness score track observed win-rate × contribution margin? */
-export function backtest(markets: MarketCombo[], weights: Weights["market"]) {
-  const rows = markets.filter((m) => m.win_rate != null && m.contribution_margin != null);
-  const xs = rows.map((m) => marketScore(m, weights));
-  const ys = rows.map((m) => (m.win_rate ?? 0) * (m.contribution_margin ?? 0));
-  return { n: rows.length, r: pearson(xs, ys), points: rows.map((m, i) => ({ id: m.id, score: xs[i], outcome: ys[i] })) };
+/** Back-test: does the attractiveness score track observed win-rate × contribution margin?
+ *  Outcomes come from closed opportunities in each market (needs ≥ 3 closed deals per market). */
+export function backtest(markets: MarketCombo[], weights: Weights["market"], opps: Opportunity[] = []) {
+  const key = (c: string, a: string, s: string) => `${c}-${a}-${s}`.toLowerCase().replace(/\s+/g, "-");
+  const byMarket = new Map<string, Opportunity[]>();
+  for (const o of opps) if (o.stage === "won" || o.stage === "lost") byMarket.set(key(o.country, o.arena, o.segment), [...(byMarket.get(key(o.country, o.arena, o.segment)) ?? []), o]);
+  const rows = markets
+    .map((m) => {
+      const closed = byMarket.get(m.id) ?? [];
+      const won = closed.filter((o) => o.stage === "won");
+      if (closed.length >= 3) return { m, win: won.length / closed.length, margin: won.length ? won.reduce((a, o) => a + o.gross_margin, 0) / won.length : 0 };
+      if (m.win_rate != null && m.contribution_margin != null) return { m, win: m.win_rate, margin: m.contribution_margin };
+      return null;
+    })
+    .filter((r): r is { m: MarketCombo; win: number; margin: number } => !!r);
+  const xs = rows.map((r) => marketScore(r.m, weights));
+  const ys = rows.map((r) => r.win * r.margin);
+  return { n: rows.length, r: pearson(xs, ys), points: rows.map((r, i) => ({ id: r.m.id, score: xs[i], outcome: ys[i] })) };
 }
 
 export function arenaThreat(competitors: Competitor[], arena: Arena, w?: Weights["threat"]) {

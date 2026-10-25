@@ -42,7 +42,7 @@ ${compSigs.length ? compSigs.map((x) => `- [${x.urgency}] ${x.title} → ${x.rec
 ${mktSigs.length ? mktSigs.map((x) => `- [${x.urgency}] ${x.title} → ${x.recommended_action}`).join("\n") : "- No new market signals"}
 
 ## 4. Accounts to action
-${accts.map(({ a, p }) => `- **${a.name}**${a.sample ? " (sample)" : ""} — propensity ${p.score}. Why now: ${a.why_now}`).join("\n")}
+${accts.map(({ a, p }) => `- **${a.name}** — propensity ${p.score}. Why now: ${a.why_now}`).join("\n")}
 ${accSigs.length ? `\nTrigger events:\n${accSigs.map((x) => `- ${x.title} → ${x.recommended_action}`).join("\n")}` : ""}
 
 ## 5. Win/loss
@@ -60,7 +60,7 @@ ${due.map((t) => `- ${t.title} — ${t.owner}, due ${t.due}`).join("\n")}
 - ${k.monitored} competitors monitored; ${k.verifiedProfiles} verified, ${k.pending} pending
 - Average evidence coverage ${pct(k.avgCoverage)} (target 85%+)
 
-_Limitations: scores and weights are design assumptions; pipeline, accounts and most market inputs are illustrative seed data pending verification._`;
+_Method: facts carry source links and verification status; market and threat scores are analyst judgements; win/loss and forecasts use only deals logged in Sales. Weights are validated once ≥ 3 closed deals exist per market._`;
 }
 
 export default function Brief() {

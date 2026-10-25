@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ExternalLink, Plus } from "lucide-react";
 import { useIntel, uid, today } from "@/lib/store";
 import { ARENAS, ARENA_SHORT } from "@/lib/labels";
@@ -15,7 +15,7 @@ export default function Research() {
   const [q, setQ] = useState("");
   const [adding, setAdding] = useState(false);
 
-  const entityName = (id: string) => (id === "hexa" ? "Hexa" : state.competitors.find((c) => c.id === id)?.name ?? state.accounts.find((a) => a.id === id)?.name ?? id);
+  const entityName = useCallback((id: string) => (id === "hexa" ? "Hexa" : state.competitors.find((c) => c.id === id)?.name ?? state.accounts.find((a) => a.id === id)?.name ?? id), [state.competitors, state.accounts]);
 
   // Verification queue: anything not verified, plus stale review dates (> 30 days).
   const queue = useMemo(() => {
@@ -25,7 +25,7 @@ export default function Research() {
       ...state.pricing.filter((p) => p.provenance.verification_status !== "verified").map((p) => ({ kind: "Price observation", id: p.id, name: `${entityName(p.entity_id)} — ${p.service}`, status: p.provenance.verification_status, conf: p.provenance.confidence, stale: stale(p.provenance.last_reviewed_at), tier: p.entity_id === "hexa" ? "internal" : "pricing" })),
       ...state.observations.filter((o) => o.verification_status !== "verified").map((o) => ({ kind: "Observation", id: o.id, name: `${entityName(o.entity_id)} — ${o.field}`, status: o.verification_status, conf: o.confidence, stale: stale(o.last_reviewed_at), tier: "evidence" })),
     ].sort((a, b) => (a.tier === "tier1" ? -1 : 0) - (b.tier === "tier1" ? -1 : 0));
-  }, [state]);
+  }, [state, entityName]);
 
   const obs = state.observations.filter((o) => !q || `${entityName(o.entity_id)} ${o.field} ${o.observed_value}`.toLowerCase().includes(q.toLowerCase()));
   const verify = (o: Observation, v: Verification) => set("observations", (xs) => xs.map((x) => (x.id === o.id ? { ...x, verification_status: v, last_reviewed_at: today() } : x)));

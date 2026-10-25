@@ -60,6 +60,10 @@ export interface Competitor {
     pricing_pressure: number;
     growth_signals: number;
   };
+  /** Extra pages to monitor for changes (pricing, services). */
+  monitor_urls?: string[];
+  /** Google News query; defaults to the quoted name. */
+  news_query?: string;
   /** Share of the ~100 core fields populated with evidence (0–1). */
   evidence_coverage: number;
   battlecard: Battlecard;
@@ -132,7 +136,7 @@ export interface SalaryBenchmark {
   annual_mid: number;
   annual_high: number;
   oncost_pct: number; // statutory + benefits as % of salary
-  time_to_hire_days: number;
+  time_to_hire_days?: number;
   availability: "scarce" | "tight" | "balanced" | "abundant";
   provenance: Provenance;
 }
@@ -140,7 +144,16 @@ export interface SalaryBenchmark {
 export interface Account {
   id: string;
   name: string;
-  sample: boolean; // illustrative seed record
+  sample: boolean; // legacy flag; always false for live records
+  domain?: string;
+  website?: string;
+  linkedin_url?: string;
+  apollo_org_id?: string;
+  source?: "apollo" | "lusha" | "manual";
+  description?: string;
+  location?: string;
+  open_roles?: { title: string; url?: string; posted_at?: string }[];
+  enriched_at?: string;
   country: CountryCode;
   industry: string;
   segment: Segment;
@@ -171,6 +184,10 @@ export interface Contact {
   lawful_basis: "legitimate_interest" | "consent" | "existing_relationship";
   verified: boolean;
   source_type: SourceType;
+  email?: string;
+  phone?: string;
+  linkedin_url?: string;
+  apollo_id?: string;
 }
 
 export type SignalType =
@@ -185,7 +202,8 @@ export type SignalType =
   | "pricing_change"
   | "regulatory"
   | "web_change"
-  | "partnership";
+  | "partnership"
+  | "news";
 
 export interface Signal {
   id: string;

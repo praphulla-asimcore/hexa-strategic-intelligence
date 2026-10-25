@@ -22,8 +22,8 @@ export default function Markets() {
   const w = state.weights.market;
 
   const ranked = useMemo(() => state.markets.map((m) => ({ m, score: marketScore(m, w) })).sort((a, b) => b.score - a.score), [state.markets, w]);
-  const bt = backtest(state.markets, w);
-  const btDefault = backtest(state.markets, DEFAULT_WEIGHTS.market);
+  const bt = backtest(state.markets, w, state.opportunities);
+  const btDefault = backtest(state.markets, DEFAULT_WEIGHTS.market, state.opportunities);
   const sel = state.markets.find((m) => m.id === focus);
   const setW = (k: keyof typeof w, v: number) => set("weights", (x) => ({ ...x, market: { ...x.market, [k]: v } }));
   const total = Object.values(w).reduce((a, b) => a + b, 0);
@@ -68,7 +68,7 @@ export default function Markets() {
               </ScatterChart>
             </ResponsiveContainer>
           </div>
-          <p className="mt-2 text-[11px] text-muted">Outcome data here is illustrative. With n &lt; 20, treat r as directional only.</p>
+          <p className="mt-2 text-[11px] text-muted">{bt.n === 0 ? "No outcome data yet — needs ≥ 3 closed deals per market in Sales. Until then, weights remain design assumptions." : bt.n < 20 ? "Few markets with outcomes — treat r as directional only." : "Based on closed deals logged in Sales."}</p>
         </Card>
         <Card title={sel ? "Selected combination" : "Score breakdown"} subtitle={sel ? `${COUNTRY_LABEL[sel.country]} · ${ARENA_LABEL[sel.arena]} · ${sel.segment}` : "Select a row to inspect"}>
           {sel ? <Detail m={sel} /> : <p className="text-sm text-muted">Click any combination to see its factor breakdown, mapped rivals and edit its inputs.</p>}
@@ -109,7 +109,7 @@ export default function Markets() {
       {view === "heat" && <Heatmap ranked={ranked} onPick={setFocus} />}
 
       {view === "bubble" && (
-        <Card title="Addressable size vs attractiveness" subtitle="Bubble size = margin potential. Upper-right: large and attractive.">
+        <Card title="Addressable size vs attractiveness" subtitle={ranked.some(({ m }) => m.addressable_usd_m) ? "Bubble size = margin potential. Upper-right: large and attractive." : "No sourced addressable-market sizes yet — add them via 'Add combination' or edit a market, citing the source."}>
           <div className="h-[420px]">
             <ResponsiveContainer>
               <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 0 }}>
@@ -118,7 +118,7 @@ export default function Markets() {
                 <YAxis type="number" dataKey="score" domain={[40, 90]} name="Score" />
                 <ZAxis type="number" dataKey="margin" range={[80, 500]} />
                 <Tooltip />
-                <Scatter data={ranked.map(({ m, score }) => ({ name: `${m.country} ${ARENA_SHORT[m.arena]} ${m.segment}`, tam: m.addressable_usd_m ?? 5, score, margin: m.margin }))} fill="var(--chart-1)" fillOpacity={0.5}>
+                <Scatter data={ranked.filter(({ m }) => m.addressable_usd_m).map(({ m, score }) => ({ name: `${m.country} ${ARENA_SHORT[m.arena]} ${m.segment}`, tam: m.addressable_usd_m, score, margin: m.margin }))} fill="var(--chart-1)" fillOpacity={0.5}>
                   <LabelList dataKey="name" position="top" style={{ fontSize: 9, fill: "var(--muted)" }} />
                 </Scatter>
               </ScatterChart>

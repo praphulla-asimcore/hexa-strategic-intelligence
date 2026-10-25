@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Check, Minus, Plus } from "lucide-react";
 import { useIntel, uid, today } from "@/lib/store";
-import { FX_TO_USD } from "@/lib/data/seed";
 import { BASE_SHOCK, SCENARIO_PRESETS, applyShock, forecast, marginModel, winLoss, type MarginInputs, type Shock } from "@/lib/scoring";
 import { ARENAS, ARENA_LABEL, ARENA_SHORT, COUNTRY_LABEL, PRICE_TYPE_LABEL } from "@/lib/labels";
 import type { Arena, CountryCode, PriceType, PricingObservation } from "@/lib/types";
@@ -30,6 +29,7 @@ export default function Pricing() {
 
 function Benchmarks() {
   const { state, set } = useIntel();
+  const FX_TO_USD = state.fx;
   const [arena, setArena] = useState<Arena>("eor_payroll");
   const [adding, setAdding] = useState(false);
   const obs = state.pricing.filter((p) => p.arena === arena);
@@ -99,6 +99,7 @@ function Benchmarks() {
 
 function AddPrice({ open, onClose, arena, onAdd }: { open: boolean; onClose: () => void; arena: Arena; onAdd: (p: PricingObservation) => void }) {
   const { state } = useIntel();
+  const FX_TO_USD = state.fx;
   const [f, setF] = useState({ entity: "hexa", service: "", type: "published" as PriceType, value: "", unit: "per employee / month", currency: "USD", country: "MY" as CountryCode, scope: "", url: "" });
   return (
     <Modal open={open} onClose={onClose} title={`Add price — ${ARENA_LABEL[arena]}`}>
@@ -128,6 +129,7 @@ function AddPrice({ open, onClose, arena, onAdd }: { open: boolean; onClose: () 
 // ─────────────────────── Margin model ───────────────────────
 function useRoleInputs() {
   const { state } = useIntel();
+  const FX_TO_USD = state.fx;
   const roles = [...new Set(state.salaries.map((s) => s.role))];
   const [role, setRole] = useState(roles[0]);
   const buyerOpts = state.salaries.filter((s) => s.role === role && s.country !== "NP");
@@ -216,7 +218,7 @@ function MarginView() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-[11px] text-muted">Break-even price: {fmtUsd(res.breakevenPriceUsd)}. Salary benchmarks are illustrative — replace with verified data.</p>
+          <p className="text-[11px] text-muted">Break-even price: {fmtUsd(res.breakevenPriceUsd)}. Salary benchmarks are public-source estimates (see Research) — replace with Hexa&apos;s actual payroll costs. Set Hexa&apos;s price via Benchmarks → Add price observation.</p>
         </Card>
       </div>
     </div>
