@@ -53,7 +53,7 @@ export default function Overview() {
         <Stat label="Intel-assisted lift" value={`${k.lift.gpLift >= 0 ? "+" : ""}${pct(k.lift.gpLift)}`} tone={k.lift.gpLift > 0 ? "good" : "bad"} sub="GP / target vs control" icon={<CheckCircle2 className="h-4 w-4" />} />
       </div>
 
-      <Card title="Where to win next" subtitle="Top-ranked market combinations with rivals, price position, target accounts and the next action.">
+      <Card className="hexa-accent-top" title={<span className="text-hexa-gradient text-base">Where to win next</span>} subtitle="Top-ranked market combinations with rivals, price position, target accounts and the next action.">
         <div className="grid gap-4 lg:grid-cols-3">
           {win.map((w, i) => (
             <div key={w.m.id} className="flex flex-col rounded-lg border border-line bg-surface-2 p-4">

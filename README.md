@@ -23,7 +23,7 @@ Built from the *Hexa Strategic Intelligence Blueprint* (24 Oct 2026).
 | **Ask the analyst** | Claude-grounded Q&A over platform data (set `ANTHROPIC_API_KEY`); falls back to a built-in rule-based analyst |
 | **Models & data** | Threat / propensity weights, JSON import/export, CSV exports, reset to seed |
 
-Plus: ⌘K global search, dark mode, mobile layout, print styles.
+Plus: HEXA brand system (Inter, pink→purple→blue gradient, logo), floating glassmorphism navbar, ambient orb + hex-grid background, frosted-glass cards, dark-first with light mode, ⌘K global search, mobile sheet navigation, print styles.
 
 ## Data status — important
 

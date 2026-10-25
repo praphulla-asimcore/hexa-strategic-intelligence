@@ -60,7 +60,7 @@ export default function Ask() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] flex-col">
+    <div className="flex h-[calc(100vh-9.5rem)] flex-col">
       <PageHeader
         title="Ask the analyst"
         subtitle="Retrieval-grounded answers over the platform's own data — sources, uncertainty, financial implications and owners. Uses Claude when ANTHROPIC_API_KEY is set; otherwise a built-in rule-based analyst."
@@ -80,8 +80,8 @@ export default function Ask() {
           )}
           {msgs.map((m, i) => (
             <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
-              {m.role === "assistant" && <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand-600 text-white"><Bot className="h-4 w-4" /></div>}
-              <div className={`max-w-3xl rounded-xl px-4 py-3 ${m.role === "user" ? "bg-brand-600 text-sm text-white" : "border border-line bg-surface-2"}`}>
+              {m.role === "assistant" && <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-hexa-gradient text-white shadow-[0_4px_14px_rgba(139,24,232,0.4)]"><Bot className="h-4 w-4" /></div>}
+              <div className={`max-w-3xl rounded-xl px-4 py-3 ${m.role === "user" ? "bg-hexa-gradient text-sm text-white shadow-[0_6px_20px_rgba(139,24,232,0.3)]" : "glass"}`}>
                 {m.role === "user" ? m.text : <Markdown text={m.text} />}
                 {m.engine && <div className="mt-2 text-[10px] uppercase tracking-wide text-subtle">{m.engine === "llm" ? "Claude · grounded in platform data" : "Built-in analyst"}</div>}
               </div>

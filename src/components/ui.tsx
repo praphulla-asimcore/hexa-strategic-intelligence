@@ -8,7 +8,8 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[1.7rem]">{title}</h1>
+        <div className="mt-2 h-[3px] w-14 rounded-full bg-hexa-gradient" />
         {subtitle && <p className="mt-1 max-w-3xl text-sm text-muted">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -18,7 +19,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 
 export function Card({ title, subtitle, actions, children, className, pad = true }: { title?: React.ReactNode; subtitle?: string; actions?: React.ReactNode; children: React.ReactNode; className?: string; pad?: boolean }) {
   return (
-    <section className={clsx("min-w-0 rounded-xl border border-line bg-surface shadow-sm", className)}>
+    <section className={clsx("glass fade-up min-w-0 rounded-2xl", className)}>
       {(title || actions) && (
         <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-3.5">
           <div>
@@ -35,10 +36,11 @@ export function Card({ title, subtitle, actions, children, className, pad = true
 
 export function Stat({ label, value, sub, tone = "default", icon }: { label: string; value: React.ReactNode; sub?: React.ReactNode; tone?: "default" | "good" | "warn" | "bad"; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+    <div className="glass fade-up group relative overflow-hidden rounded-2xl p-4 transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(139,24,232,0.18)]">
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-hexa-gradient opacity-60 transition group-hover:opacity-100" />
       <div className="flex items-center justify-between text-xs font-medium text-muted">
         <span>{label}</span>
-        {icon && <span className="text-subtle">{icon}</span>}
+        {icon && <span className="grid h-7 w-7 place-items-center rounded-lg bg-brand-50 text-brand-700">{icon}</span>}
       </div>
       <div
         className={clsx(
@@ -114,7 +116,7 @@ export function ScoreBar({ value, max = 100, tone }: { value: number; max?: numb
     <div className="flex items-center gap-2">
       <div className="h-1.5 w-full min-w-16 overflow-hidden rounded-full bg-chip">
         <div
-          className={clsx("h-full rounded-full", auto === "good" && "bg-good", auto === "brand" && "bg-brand-500", auto === "warn" && "bg-warn", auto === "bad" && "bg-bad")}
+          className={clsx("h-full rounded-full", auto === "good" && "bg-good", auto === "brand" && "bg-hexa-gradient", auto === "warn" && "bg-warn", auto === "bad" && "bg-bad")}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -131,10 +133,10 @@ export function Button({ children, onClick, variant = "secondary", size = "md", 
       disabled={disabled}
       onClick={onClick}
       className={clsx(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-2 text-sm",
-        variant === "primary" && "bg-brand-600 text-white shadow-sm hover:bg-brand-700",
-        variant === "secondary" && "border border-line bg-surface text-ink-2 shadow-sm hover:bg-chip",
+        variant === "primary" && "btn-hexa",
+        variant === "secondary" && "border border-line bg-surface text-ink-2 backdrop-blur hover:border-brand-200 hover:bg-chip",
         variant === "ghost" && "text-ink-2 hover:bg-chip",
         variant === "danger" && "border border-bad-200 bg-bad-50 text-bad hover:opacity-90",
         className,
@@ -152,7 +154,7 @@ export function Select<T extends string>({ value, onChange, options, className, 
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm text-ink shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+        className="rounded-xl border border-line bg-surface px-2.5 py-1.5 text-sm text-ink backdrop-blur focus:outline-none focus:ring-2 focus:ring-brand-500"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -169,7 +171,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={clsx(
-        "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-brand-500",
+        "w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink backdrop-blur placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-brand-500",
         props.className,
       )}
     />
@@ -181,7 +183,7 @@ export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement
     <textarea
       {...props}
       className={clsx(
-        "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-brand-500",
+        "w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink backdrop-blur placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-brand-500",
         props.className,
       )}
     />
@@ -205,21 +207,21 @@ export function Slider({ label, value, min, max, step, onChange, format }: { lab
         <span className="font-medium text-ink-2">{label}</span>
         <span className="tabular-nums text-muted">{format ? format(value) : value}</span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)} className="w-full accent-brand-600" />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(+e.target.value)} className="w-full accent-[#8b18e8]" />
     </label>
   );
 }
 
 export function Tabs<T extends string>({ tabs, value, onChange }: { tabs: { value: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void }) {
   return (
-    <div className="mb-4 flex gap-1 overflow-x-auto border-b border-line">
+    <div className="glass mb-4 inline-flex max-w-full gap-1 overflow-x-auto rounded-xl p-1">
       {tabs.map((t) => (
         <button
           key={t.value}
           onClick={() => onChange(t.value)}
           className={clsx(
-            "-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium transition",
-            value === t.value ? "border-brand-600 text-brand-700" : "border-transparent text-muted hover:text-ink",
+            "whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition",
+            value === t.value ? "nav-pill-active text-ink" : "text-muted hover:bg-chip hover:text-ink",
           )}
         >
           {t.label}
@@ -238,7 +240,7 @@ export function Table({ children }: { children: React.ReactNode }) {
   );
 }
 export const Th = ({ children, className, onClick }: { children?: React.ReactNode; className?: string; onClick?: () => void }) => (
-  <th onClick={onClick} className={clsx("whitespace-nowrap border-b border-line bg-surface-2 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted", onClick && "cursor-pointer select-none hover:text-ink", className)}>
+  <th onClick={onClick} className={clsx("whitespace-nowrap border-b border-line bg-chip px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted", onClick && "cursor-pointer select-none hover:text-ink", className)}>
     {children}
   </th>
 );
@@ -253,8 +255,8 @@ export function Empty({ children }: { children: React.ReactNode }) {
 export function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-4 pt-16" onClick={onClose}>
-      <div className="w-full max-w-xl rounded-xl border border-line bg-surface shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 pt-16 backdrop-blur-sm" onClick={onClose}>
+      <div className="glass-pop w-full max-w-xl rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <h3 className="text-sm font-semibold text-ink">{title}</h3>
           <button onClick={onClose} className="text-muted hover:text-ink" aria-label="Close">
